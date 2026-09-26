@@ -1,0 +1,100 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id         String   @id @default(uuid())
+  firstName  String
+  lastName   String
+  email      String   @unique
+  phone      String?
+  password   String
+  avatar     String?
+  isVerified Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  otpTokens OtpToken[]
+  shipments Shipment[]
+  addresses Address[]
+  wallet    Wallet?
+}
+
+enum OtpType {
+  REGISTRATION
+  PASSWORD_RESET
+}
+
+model OtpToken {
+  id        String   @id @default(uuid())
+  token     String
+  type      OtpType
+  expiresAt DateTime
+  used      Boolean  @default(false)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+}
+
+enum ShipmentStatus {
+  PENDING
+  IN_TRANSIT
+  DELAYED
+  PAID
+  CANCELLED
+}
+
+enum ServiceType {
+  STANDARD
+  EXPRESS
+  ECONOMY
+}
+
+model Shipment {
+  id               String         @id @default(uuid())
+  trackingId       String         @unique
+  senderName       String
+  senderLocation   String
+  receiverName     String
+  receiverLocation String
+  weight           Float
+  description      String?
+  serviceType      ServiceType    @default(STANDARD)
+  status           ShipmentStatus @default(PENDING)
+  amount           Float          @default(0)
+  currency         String         @default("NGN")
+  processingTime   String         @default("3-5 business days")
+  userId           String
+  user             User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+}
+
+model Address {
+  id          String   @id @default(uuid())
+  label       String
+  fullAddress String
+  city        String
+  state       String
+  country     String
+  postalCode  String   @default("")
+  isDefault   Boolean  @default(false)
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Wallet {
+  id        String   @id @default(uuid())
+  balance   Float    @default(0)
+  currency  String   @default("NGN")
+  userId    String   @unique
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
